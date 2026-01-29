@@ -32,16 +32,20 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- 2. DATABASE CONNECTION POOL (PRODUCTION READY) ---
 // server.js
+// --- DATABASE CONNECTION POOL ---
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,      
   password: process.env.DB_PASSWORD,      
   database: process.env.DB_NAME, 
-  port: process.env.DB_PORT || 3306,
+  port: process.env.DB_PORT || 3306, // This will now use 18187 from Render
   waitForConnections: true,
   connectionLimit: 10,
-  // --- ADD THIS TO FIX CLOUD CONNECTION ---
-  ssl: { rejectUnauthorized: false } 
+  queueLimit: 0,
+  // Required for Railway public connections
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 app.use((req, res, next) => {
   req.db = pool;
@@ -145,4 +149,5 @@ app.post('/api/users/sync', async (req, res) => {
 // --- 4. SERVER INITIALIZATION ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Backend Server running on port ${PORT}`));
+
 
