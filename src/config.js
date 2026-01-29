@@ -1,14 +1,13 @@
 // src/config.js
 
-// 1. Define your Local IP for development
+// 1. Your Local IP for development
 const LOCAL_IP = "192.168.18.27"; 
 
-// 2. Define your Deployed Backend URL (from Render, Railway, etc.)
-// Replace 'your-backend-name.onrender.com' with your actual public URL
-const PROD_URL = "https://your-backend-name.onrender.com";
+// 2. YOUR REAL LIVE BACKEND URL (From Render, Railway, etc.)
+// Replace 'likhat-habi-api' with your actual service name
+const PROD_URL = "https://likhat-habi-api.onrender.com"; 
 
-// 3. Automatically switch based on the environment
+// 3. Automatically switch based on where the app is running
 export const API_URL = window.location.hostname === "localhost" 
-    ? "http://192.168.18.27:5000" 
-    : "https://your-backend-name.onrender.com";
-
+    ? `http://${LOCAL_IP}:5000` 
+    : PROD_URL;
