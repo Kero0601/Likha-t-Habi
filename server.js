@@ -31,18 +31,18 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- 2. DATABASE CONNECTION POOL (PRODUCTION READY) ---
+// server.js
 const pool = mysql.createPool({
-  host: process.env.MYSQLHOST || process.env.DB_HOST,
-  user: process.env.MYSQLUSER || process.env.DB_USER,      
-  password: process.env.MYSQL_ROOT_PASSWORD || process.env.DB_PASSWORD,      
-  database: process.env.MYSQL_DATABASE || process.env.DB_NAME, 
-  port: process.env.MYSQLPORT || 3306,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,      
+  password: process.env.DB_PASSWORD,      
+  database: process.env.DB_NAME, 
+  port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
-  ssl: { rejectUnauthorized: false } // Required for Railway/Aiven/TiDB
+  // --- ADD THIS TO FIX CLOUD CONNECTION ---
+  ssl: { rejectUnauthorized: false } 
 });
-
 app.use((req, res, next) => {
   req.db = pool;
   next();
@@ -145,3 +145,4 @@ app.post('/api/users/sync', async (req, res) => {
 // --- 4. SERVER INITIALIZATION ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Backend Server running on port ${PORT}`));
+
