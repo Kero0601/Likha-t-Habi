@@ -11,10 +11,9 @@ const chatRoutes = require('./routes/chatRoutes');
 const app = express();
 
 // --- 1. ENHANCED CORS FOR PRODUCTION ---
-// This fixes the 'blocked by CORS policy' errors seen in your console
 const allowedOrigins = [
   'http://localhost:3000', 
-  'https://likha-t-habi.vercel.app' // Your actual Vercel URL
+  'https://likha-t-habi.vercel.app' // Matches your deployed Vercel URL
 ];
 
 app.use(cors({
@@ -32,20 +31,18 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- 2. DATABASE CONNECTION POOL (PRODUCTION READY) ---
-// Changed 'localhost' to process.env.DB_HOST to work with Cloud Databases
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,      
-  password: process.env.DB_PASSWORD,      
-  database: process.env.DB_NAME, 
-  port: process.env.DB_PORT || 3306,
+  host: process.env.MYSQLHOST || process.env.DB_HOST,
+  user: process.env.MYSQLUSER || process.env.DB_USER,      
+  password: process.env.MYSQL_ROOT_PASSWORD || process.env.DB_PASSWORD,      
+  database: process.env.MYSQL_DATABASE || process.env.DB_NAME, 
+  port: process.env.MYSQLPORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: { rejectUnauthorized: false } // Required for most cloud DBs like Aiven or TiDB
+  ssl: { rejectUnauthorized: false } // Required for Railway/Aiven/TiDB
 });
 
-// Middleware to attach DB pool to every request
 app.use((req, res, next) => {
   req.db = pool;
   next();
@@ -59,7 +56,6 @@ app.use('/api/chat', chatRoutes);
 // =======================================================
 //  ORDER ROUTES (WITH ROBUST STOCK VALIDATION)
 // =======================================================
-
 app.post('/api/orders', async (req, res) => {
   try {
     const { userId, user_id, items, total, totalAmount, address, phone, paymentMethod, paymentReference, payment_reference } = req.body;
@@ -113,7 +109,7 @@ app.post('/api/orders', async (req, res) => {
 // --- ORDER RETRIEVAL ROUTES ---
 app.get('/api/orders/all', async (req, res) => {
   try {
-    const [rows] = await pool.query(`SELECT o.*, u.display_name, u.email FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC`);
+    const [rows] = await pool.query(`SELECT o.*, u.display_name, u.email FROM orders o LEFT JOIN users u ON o.id = u.id ORDER BY o.created_at DESC`);
     res.json(rows);
   } catch (err) { res.status(500).json({ error: "Server Error" }); }
 });
@@ -121,7 +117,11 @@ app.get('/api/orders/all', async (req, res) => {
 app.get('/api/orders/user/:uid', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', [req.params.uid]);
-    const orders = rows.map(o => ({ ...o, items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items, address: typeof o.address === 'string' ? JSON.parse(o.address) : o.address }));
+    const orders = rows.map(o => ({ 
+        ...o, 
+        items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items, 
+        address: typeof o.address === 'string' ? JSON.parse(o.address) : o.address 
+    }));
     res.json(orders);
   } catch (err) { res.status(500).json({ error: "Server Error" }); }
 });
@@ -143,6 +143,5 @@ app.post('/api/users/sync', async (req, res) => {
 });
 
 // --- 4. SERVER INITIALIZATION ---
-// Changed to process.env.PORT for Render deployment
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Backend Server running on port ${PORT}`));
