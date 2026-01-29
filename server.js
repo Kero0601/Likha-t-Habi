@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+require('dotenv').config(); // Load environment variables from .env
 
 // Import routes
 const productRoutes = require('./routes/productRoutes'); 
@@ -9,34 +10,35 @@ const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
-// 1. MIDDLEWARE
+// --- 1. MIDDLEWARE ---
 app.use(cors()); 
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// 2. DATABASE CONNECTION
+// --- 2. DATABASE CONNECTION POOL ---
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',      
-  password: '',      
-  database: 'likhat_habi_db', 
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',      
+  password: process.env.DB_PASSWORD || '',      
+  database: process.env.DB_NAME || 'likhat_habi_db', 
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 });
 
+// Middleware to attach DB pool to every request
 app.use((req, res, next) => {
   req.db = pool;
   next();
 });
 
-// 3. ROUTES
+// --- 3. API ROUTES ---
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/chat', chatRoutes);
 
 // =======================================================
-//  ORDER ROUTES (FIXED: WITH STOCK VALIDATION)
+//  ORDER ROUTES (WITH ROBUST STOCK VALIDATION)
 // =======================================================
 
 app.post('/api/orders', async (req, res) => {
@@ -53,71 +55,81 @@ app.post('/api/orders', async (req, res) => {
         paymentReference, payment_reference 
     } = req.body;
 
+    // Handle incoming items (support both raw array and JSON string)
     const parsedItems = typeof items === 'string' ? JSON.parse(items) : items;
 
-    // -------------------------------------------------------------
-    // 1. SAFETY CHECK: Verify Stock Exists Before Creating Order
-    // -------------------------------------------------------------
-    if (Array.isArray(parsedItems)) {
-        for (const item of parsedItems) {
-            const pId = item.id || item._id;
-            const orderQty = item.quantity || 1;
+    if (!parsedItems || !Array.isArray(parsedItems)) {
+        return res.status(400).json({ error: "Invalid items format." });
+    }
 
-            if (pId) {
-                // Check DB for current stock
-                const [rows] = await pool.query('SELECT quantity, name FROM products WHERE id = ?', [pId]);
-                
-                if (rows.length === 0) {
-                     return res.status(400).json({ error: `Product ID ${pId} no longer exists.` });
-                }
+    // -------------------------------------------------------------
+    // 1. SAFETY CHECK: Verify Stock Before Creating Order
+    // -------------------------------------------------------------
+    for (const item of parsedItems) {
+        const pId = item.id || item._id;
+        const orderQty = item.quantity || 1;
 
-                const productInDb = rows[0];
-                if (productInDb.quantity < orderQty) {
-                    // REJECT ORDER IF STOCK IS INSUFFICIENT
-                    return res.status(400).json({ 
-                        error: `Order Failed: '${productInDb.name}' only has ${productInDb.quantity} left in stock.` 
-                    });
-                }
+        if (pId) {
+            const [rows] = await pool.query('SELECT quantity, name FROM products WHERE id = ?', [pId]);
+            
+            if (rows.length === 0) {
+                 return res.status(400).json({ error: `Product '${item.name}' (ID: ${pId}) no longer exists.` });
+            }
+
+            const productInDb = rows[0];
+            if (productInDb.quantity < orderQty) {
+                // REJECT ORDER IF STOCK IS INSUFFICIENT
+                return res.status(400).json({ 
+                    error: `Order Failed: '${productInDb.name}' only has ${productInDb.quantity} left in stock.` 
+                });
             }
         }
     }
-    // -------------------------------------------------------------
 
+    // -------------------------------------------------------------
+    // 2. DATA NORMALIZATION
+    // -------------------------------------------------------------
     const finalUserId = userId || user_id || null;
     const finalTotal = total || totalAmount || 0;
     const finalRef = paymentReference || payment_reference || ''; 
     const formatJson = (data) => (typeof data === 'string' ? data : JSON.stringify(data));
 
-    // 2. Insert Order
+    // -------------------------------------------------------------
+    // 3. INSERT ORDER
+    // -------------------------------------------------------------
     const query = `
       INSERT INTO orders (
-        user_id, customer_id, items, total_amount, status, address, phone, 
+        user_id, items, total_amount, status, address, phone, 
         payment_method, payment_reference, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()) 
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW()) 
     `;
 
     const values = [
-      finalUserId, finalUserId, 
-      formatJson(items), finalTotal, 
-      'Order Placed', formatJson(address), 
-      phone, paymentMethod || 'COD', finalRef 
+      finalUserId, 
+      formatJson(parsedItems), 
+      finalTotal, 
+      'Order Placed', 
+      formatJson(address), 
+      phone, 
+      paymentMethod || 'COD', 
+      finalRef 
     ];
 
     const [result] = await pool.query(query, values);
 
-    // 3. Reduce Stock (Now safe because we validated first)
-    if (Array.isArray(parsedItems)) {
-        for (const item of parsedItems) {
-            const pId = item.id || item._id;
-            const qty = item.quantity || 1;
+    // -------------------------------------------------------------
+    // 4. REDUCE STOCK (Now safe because we validated first)
+    // -------------------------------------------------------------
+    for (const item of parsedItems) {
+        const pId = item.id || item._id;
+        const qty = item.quantity || 1;
 
-            if (pId) {
-                console.log(`📉 Reducing Stock: Product ID ${pId} minus ${qty}`);
-                await pool.query(
-                    'UPDATE products SET quantity = GREATEST(0, quantity - ?) WHERE id = ?', 
-                    [qty, pId]
-                );
-            }
+        if (pId) {
+            console.log(`📉 Reducing Stock: Product ID ${pId} minus ${qty}`);
+            await pool.query(
+                'UPDATE products SET quantity = GREATEST(0, quantity - ?) WHERE id = ?', 
+                [qty, pId]
+            );
         }
     }
 
@@ -132,7 +144,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// --- GET ALL ORDERS ---
+// --- GET ALL ORDERS (Admin Access) ---
 app.get('/api/orders/all', async (req, res) => {
   try {
     const query = `
@@ -149,13 +161,13 @@ app.get('/api/orders/all', async (req, res) => {
   }
 });
 
-// --- GET USER ORDERS ---
+// --- GET USER ORDERS (Customer History) ---
 app.get('/api/orders/user/:uid', async (req, res) => {
   const { uid } = req.params;
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM orders WHERE user_id = ? OR customer_id = ? ORDER BY created_at DESC', 
-      [uid, uid]
+      'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', 
+      [uid]
     );
     const orders = rows.map(order => ({
       ...order,
@@ -169,7 +181,7 @@ app.get('/api/orders/user/:uid', async (req, res) => {
   }
 });
 
-// --- UPDATE STATUS ---
+// --- UPDATE ORDER STATUS ---
 app.patch('/api/orders/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
@@ -182,7 +194,7 @@ app.patch('/api/orders/:id/status', async (req, res) => {
   }
 });
 
-// --- SYNC USER ---
+// --- SYNC USER (Firebase Integration) ---
 app.post('/api/users/sync', async (req, res) => {
   const { uid, email, displayName, isAdmin } = req.body;
   try {
@@ -198,5 +210,6 @@ app.post('/api/users/sync', async (req, res) => {
   }
 });
 
-const PORT = 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// --- SERVER INITIALIZATION ---
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Backend Server running on port ${PORT}`));
