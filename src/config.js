@@ -9,5 +9,6 @@ const PROD_URL = "https://your-backend-name.onrender.com";
 
 // 3. Automatically switch based on the environment
 export const API_URL = window.location.hostname === "localhost" 
-    ? `http://${LOCAL_IP}:5000` 
-    : PROD_URL;
+    ? "http://192.168.18.27:5000" 
+    : "https://your-backend-name.onrender.com";
+
