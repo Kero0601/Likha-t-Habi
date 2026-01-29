@@ -1,374 +1,202 @@
-import React, { createContext, useState, useEffect, useCallback } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../firebase";
-import { toast } from 'react-toastify';
-import { API_URL } from "../config"; 
+const express = require('express');
+const mysql = require('mysql2/promise');
+const cors = require('cors');
 
-export const ShopContext = createContext();
+// Import routes
+const productRoutes = require('./routes/productRoutes'); 
+const userRoutes = require('./routes/userRoutes'); 
+const chatRoutes = require('./routes/chatRoutes'); 
 
-export const ShopProvider = ({ children }) => {
-  // --- 1. DATA STATES ---
-  const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // --- 2. USER STATES ---
-  const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  
-  // --- 3. LOADING STATES ---
-  const [authLoading, setAuthLoading] = useState(true);
-  const [productsLoading, setProductsLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false); 
+const app = express();
 
-  const isLoading = authLoading || productsLoading || actionLoading;
+// 1. MIDDLEWARE
+app.use(cors()); 
+app.use(express.json({ limit: '50mb' })); 
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-  // --- HELPER: ENSURE DATA IS ARRAY ---
-  const ensureArray = (data) => {
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    try {
-        const parsed = JSON.parse(data);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch (e) { return []; }
-  };
+// 2. DATABASE CONNECTION
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',      
+  password: '',      
+  database: 'likhat_habi_db', 
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 
-  const saveCartToDB = async (newCart, currentUser) => {
-    if (!currentUser) return;
-    try {
-      await fetch(`${API_URL}/api/users/${currentUser.uid}/cart`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cart: newCart, email: currentUser.email })
-      });
-    } catch (err) { console.error("Failed to save cart", err); }
-  };
+app.use((req, res, next) => {
+  req.db = pool;
+  next();
+});
 
-  const saveWishlistToDB = async (newWishlist, currentUser) => {
-    if (!currentUser) return;
-    try {
-      await fetch(`${API_URL}/api/users/${currentUser.uid}/wishlist`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wishlist: newWishlist, email: currentUser.email })
-      });
-    } catch (err) { console.error("Failed to save wishlist", err); }
-  };
+// 3. ROUTES
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/chat', chatRoutes);
 
-  // --- 5. AUTHENTICATION ---
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          const response = await fetch(`${API_URL}/api/users/${firebaseUser.uid}`);
-          if (response.ok) {
-            const userData = await response.json();
-            setUser({
-              uid: firebaseUser.uid,
-              id: firebaseUser.uid,
-              email: firebaseUser.email,
-              displayName: firebaseUser.displayName,
-              phone: userData.phone || "",
-              address: userData.address || null,
-            });
-            setIsAdmin(userData.is_admin || firebaseUser.email === "likhathabi@admin.com");
-            setCart(ensureArray(userData.cart));
-            setWishlist(ensureArray(userData.wishlist));
-          } else {
-             setUser({ uid: firebaseUser.uid, email: firebaseUser.email, displayName: firebaseUser.displayName });
-          }
-        } catch (err) {
-          console.error("User check failed:", err);
-          setUser({ uid: firebaseUser.uid, email: firebaseUser.email });
+// =======================================================
+//  ORDER ROUTES (FIXED: WITH STOCK VALIDATION)
+// =======================================================
+
+app.post('/api/orders', async (req, res) => {
+  try {
+    console.log("📦 [ORDER] Incoming:", req.body);
+
+    const { 
+        userId, user_id, 
+        items, 
+        total, totalAmount, 
+        address, 
+        phone, 
+        paymentMethod, 
+        paymentReference, payment_reference 
+    } = req.body;
+
+    const parsedItems = typeof items === 'string' ? JSON.parse(items) : items;
+
+    // -------------------------------------------------------------
+    // 1. SAFETY CHECK: Verify Stock Exists Before Creating Order
+    // -------------------------------------------------------------
+    if (Array.isArray(parsedItems)) {
+        for (const item of parsedItems) {
+            const pId = item.id || item._id;
+            const orderQty = item.quantity || 1;
+
+            if (pId) {
+                // Check DB for current stock
+                const [rows] = await pool.query('SELECT quantity, name FROM products WHERE id = ?', [pId]);
+                
+                if (rows.length === 0) {
+                     return res.status(400).json({ error: `Product ID ${pId} no longer exists.` });
+                }
+
+                const productInDb = rows[0];
+                if (productInDb.quantity < orderQty) {
+                    // REJECT ORDER IF STOCK IS INSUFFICIENT
+                    return res.status(400).json({ 
+                        error: `Order Failed: '${productInDb.name}' only has ${productInDb.quantity} left in stock.` 
+                    });
+                }
+            }
         }
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-        setCart([]);
-        setWishlist([]);
-      }
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    }
+    // -------------------------------------------------------------
 
-  // --- 6. REAL-TIME FETCH PRODUCTS ---
-  const fetchProducts = useCallback(async (showLoading = true) => {
-      try {
-        if (showLoading) setProductsLoading(true);
-        const response = await fetch(`${API_URL}/api/products?t=${Date.now()}`); 
-        if (!response.ok) throw new Error("Network response was not ok");
-        const data = await response.json();
-        setProducts(data);
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        if (showLoading) setProductsLoading(false);
-      }
-  }, []);
+    const finalUserId = userId || user_id || null;
+    const finalTotal = total || totalAmount || 0;
+    const finalRef = paymentReference || payment_reference || ''; 
+    const formatJson = (data) => (typeof data === 'string' ? data : JSON.stringify(data));
 
-  useEffect(() => {
-    fetchProducts(true); 
-    const interval = setInterval(() => {
-        fetchProducts(false); 
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [fetchProducts]);
+    // 2. Insert Order
+    const query = `
+      INSERT INTO orders (
+        user_id, customer_id, items, total_amount, status, address, phone, 
+        payment_method, payment_reference, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()) 
+    `;
 
-  // --- 7. DATABASE ACTIONS ---
-  const addProduct = async (product) => {
-    try {
-      const response = await fetch(`${API_URL}/api/products`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(product)
-      });
-      if (!response.ok) throw new Error("Failed to add");
-      await fetchProducts(true); 
-      return true;
-    } catch (err) { throw err; }
-  };
+    const values = [
+      finalUserId, finalUserId, 
+      formatJson(items), finalTotal, 
+      'Order Placed', formatJson(address), 
+      phone, paymentMethod || 'COD', finalRef 
+    ];
 
-  const updateProduct = async (id, updatedData) => {
-    try {
-      const response = await fetch(`${API_URL}/api/products/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData)
-      });
-      if (!response.ok) throw new Error("Failed to update");
-      await fetchProducts(true); 
-      return true;
-    } catch (err) { throw err; }
-  };
+    const [result] = await pool.query(query, values);
 
-  const deleteProduct = async (id) => {
-    try {
-      const response = await fetch(`${API_URL}/api/products/${id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error("Failed to delete");
-      await fetchProducts(true); 
-      return true;
-    } catch (err) { throw err; }
-  };
+    // 3. Reduce Stock (Now safe because we validated first)
+    if (Array.isArray(parsedItems)) {
+        for (const item of parsedItems) {
+            const pId = item.id || item._id;
+            const qty = item.quantity || 1;
 
-  // --- 8. CART & WISHLIST ACTIONS (FIXED: NO SPAM NOTIFICATIONS) ---
-  
-  const addToCart = (product) => {
-    const stock = product.quantity || 0;
+            if (pId) {
+                console.log(`📉 Reducing Stock: Product ID ${pId} minus ${qty}`);
+                await pool.query(
+                    'UPDATE products SET quantity = GREATEST(0, quantity - ?) WHERE id = ?', 
+                    [qty, pId]
+                );
+            }
+        }
+    }
+
+    const [newOrder] = await pool.query('SELECT * FROM orders WHERE id = ?', [result.insertId]);
+    console.log("✅ [ORDER] Saved & Stock Updated");
     
-    // FIX 1: Add toastId to prevent duplicates
-    if (stock <= 0) {
-        toast.error("Sorry, this item is Sold Out!", { toastId: 'sold-out-error' });
-        return;
-    }
+    res.status(201).json({ success: true, order: newOrder[0] });
 
-    setCart((prev) => {
-      const productId = product.id || product._id;
-      const existing = prev.find(item => (item.id || item._id) === productId);
-      let newCart;
+  } catch (err) {
+    console.error("❌ [ORDER ERROR]:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
-      if (existing) {
-        // FIX 2: Add toastId here as well
-        if (existing.quantity + 1 > stock) {
-            toast.error(`Only ${stock} items available!`, { toastId: 'stock-limit-error' });
-            return prev; 
-        }
-        newCart = prev.map(item => (item.id || item._id) === productId ? { ...item, quantity: item.quantity + 1 } : item);
-      } else {
-        newCart = [...prev, { ...product, quantity: 1 }];
-      }
-      
-      saveCartToDB(newCart, user);
-      return newCart;
-    });
-  };
+// --- GET ALL ORDERS ---
+app.get('/api/orders/all', async (req, res) => {
+  try {
+    const query = `
+      SELECT o.*, u.display_name, u.email 
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      ORDER BY o.created_at DESC
+    `;
+    const [rows] = await pool.query(query);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
 
-  const decreaseQuantity = (id) => {
-    setCart((prev) => {
-      const newCart = prev.map(item => {
-        if ((item.id || item._id) === id) return { ...item, quantity: Math.max(1, item.quantity - 1) };
-        return item;
-      });
-      saveCartToDB(newCart, user);
-      return newCart;
-    });
-  };
+// --- GET USER ORDERS ---
+app.get('/api/orders/user/:uid', async (req, res) => {
+  const { uid } = req.params;
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM orders WHERE user_id = ? OR customer_id = ? ORDER BY created_at DESC', 
+      [uid, uid]
+    );
+    const orders = rows.map(order => ({
+      ...order,
+      items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items,
+      address: typeof order.address === 'string' ? JSON.parse(order.address) : order.address
+    }));
+    res.json(orders);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
 
-  const updateCartItemCount = (newAmount, id) => {
-    const product = products.find(p => (p.id || p._id) === id);
-    const stock = product ? (product.quantity || 0) : Infinity;
+// --- UPDATE STATUS ---
+app.patch('/api/orders/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; 
+    await pool.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+    res.json({ success: true, status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
 
-    // FIX 3: Add toastId for manual input updates
-    if (newAmount > stock) {
-        toast.error(`Cannot add more. Only ${stock} available.`, { toastId: 'manual-stock-limit' });
-        setCart((prev) => {
-            const newCart = prev.map(item => (item.id || item._id) === id ? { ...item, quantity: stock } : item);
-            saveCartToDB(newCart, user);
-            return newCart;
-        });
-        return;
-    }
+// --- SYNC USER ---
+app.post('/api/users/sync', async (req, res) => {
+  const { uid, email, displayName, isAdmin } = req.body;
+  try {
+    const query = `
+      INSERT INTO users (id, email, display_name, is_admin) VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE display_name = VALUES(display_name), is_admin = VALUES(is_admin)
+    `;
+    await pool.query(query, [uid, email, displayName, isAdmin]);
+    const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [uid]);
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    setCart((prev) => {
-      const newCart = prev.map((item) => {
-        if ((item.id || item._id) === id) {
-          return { ...item, quantity: newAmount > 0 ? newAmount : 1 };
-        }
-        return item;
-      });
-      saveCartToDB(newCart, user);
-      return newCart;
-    });
-  };
-
-  const removeFromCart = (id) => {
-    setCart((prev) => {
-      const newCart = prev.filter(item => (item.id || item._id) !== id);
-      saveCartToDB(newCart, user);
-      return newCart;
-    });
-  };
-
-  const toggleWishlist = (product) => {
-    setWishlist((prev) => {
-      const productId = product.id || product._id;
-      const exists = prev.find(item => (item.id || item._id) === productId);
-      let newWishlist = exists ? prev.filter(item => (item.id || item._id) !== productId) : [...prev, product];
-      saveWishlistToDB(newWishlist, user);
-      return newWishlist;
-    });
-  };
-
-  const logout = async () => {
-    await signOut(auth);
-    setUser(null);
-    setIsAdmin(false);
-    setCart([]);
-    setWishlist([]);
-  };
-
-  const saveProfile = async (address, phone) => {
-    if (!user) return;
-    try {
-      const response = await fetch(`${API_URL}/api/users/${user.uid}/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, phone })
-      });
-      if (!response.ok) throw new Error("Failed to save profile");
-      const updatedData = await response.json();
-      setUser(prev => ({ ...prev, address: updatedData.address || address, phone: updatedData.phone || phone }));
-      return true;
-    } catch (err) {
-      console.error(err);
-      return false;
-    }
-  };
-  
-  // --- 9. ORDER ACTIONS ---
-  const placeOrder = async (orderData) => {
-    try {
-      setActionLoading(true);
-      
-      const payload = {
-        userId: user ? user.uid : null,
-        items: orderData.items,
-        totalAmount: orderData.total,
-        address: orderData.address,
-        phone: orderData.phone,
-        paymentMethod: orderData.paymentMethod || 'COD',
-        paymentReference: orderData.paymentReference || orderData.payment_reference || '' 
-      };
-
-      const response = await fetch(`${API_URL}/api/orders`, { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const text = await response.text();
-      let data;
-      try {
-          data = JSON.parse(text);
-          if (!response.ok) throw new Error(data.error || "Failed to place order");
-      } catch (err) {
-          throw new Error(data?.error || `Server Error: ${text.substring(0, 50)}...`);
-      }
-
-      // Success
-      const purchasedIds = orderData.items.map(item => item.id || item._id);
-      const remainingCart = cart.filter(cartItem => !purchasedIds.includes(cartItem.id || cartItem._id));
-      
-      setCart(remainingCart); 
-      saveCartToDB(remainingCart, user);
-      
-      await fetchProducts(false); 
-
-      toast.success("Order placed successfully!");
-      return true;
-
-    } catch (error) {
-      console.error("Order Error:", error);
-      toast.error(error.message);
-      return false;
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const fetchUserOrders = useCallback(async () => {
-    if (!user) return [];
-    try {
-      const response = await fetch(`${API_URL}/api/orders/user/${user.uid}`);
-      if (!response.ok) return [];
-      return await response.json();
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-      return [];
-    }
-  }, [user]);
-
-  const fetchAllOrders = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/orders/all`); 
-      if (!response.ok) return [];
-      return await response.json();
-    } catch (err) {
-      console.error("Failed to fetch all orders:", err);
-      return [];
-    }
-  };
-
-  const updateOrderStatus = async (orderId, newStatus) => {
-    try {
-      const response = await fetch(`${API_URL}/api/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-      return response.ok;
-    } catch (err) {
-      console.error("Failed to update status:", err);
-      return false;
-    }
-  };
-
-  return (
-    <ShopContext.Provider value={{
-      products, cart, wishlist, searchQuery, setSearchQuery,
-      user, isAdmin, isLoading, logout, 
-      fetchProducts, addProduct, updateProduct, deleteProduct,
-      addToCart, decreaseQuantity, updateCartItemCount, removeFromCart, toggleWishlist, 
-      saveProfile, 
-      placeOrder, 
-      fetchUserOrders, 
-      fetchAllOrders, 
-      updateOrderStatus
-    }}>
-      {children}
-    </ShopContext.Provider>
-  );
-};
+const PORT = 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
