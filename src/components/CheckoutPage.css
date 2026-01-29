@@ -1,0 +1,592 @@
+/* --- THEME VARIABLES --- */
+:root {
+  --lh-brown: #8d5e48;
+  --lh-brown-dark: #6e4635;
+  --lh-bg: #fdfcf8;
+  --lh-text: #4a4a4a;
+  --lh-border: #e6e6e6;
+  --lh-input-bg: #ffffff;
+}
+
+.lh-checkout-wrapper {
+  background-color: var(--lh-bg);
+  min-height: 100vh;
+  padding: 40px 20px;
+  font-family: 'Poppins', sans-serif;
+  color: var(--lh-text);
+}
+
+.lh-checkout-container { max-width: 1100px; margin: 0 auto; }
+
+.lh-header h1 {
+  font-size: 28px;
+  color: var(--lh-brown);
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+/* --- GRID LAYOUT --- */
+.lh-grid { display: flex; gap: 25px; }
+.lh-col-left { flex: 2; display: flex; flex-direction: column; gap: 20px; }
+.lh-col-right { flex: 1; }
+
+/* --- CARD --- */
+.lh-card {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  border: 1px solid white;
+}
+
+.lh-card h3 { margin: 0 0 20px; font-size: 18px; font-weight: 600; color: #333; }
+.lh-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.lh-card-header h3 { margin: 0; }
+
+.lh-text-btn { background: none; border: none; color: var(--lh-brown); font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+/* --- FORM --- */
+.lh-form { display: flex; flex-direction: column; gap: 15px; }
+.lh-row { display: flex; gap: 15px; }
+
+.lh-input {
+  flex: 1;
+  padding: 14px;
+  border: 1px solid var(--lh-border);
+  border-radius: 8px;
+  background: var(--lh-input-bg);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+.lh-input:focus { border-color: var(--lh-brown); box-shadow: 0 0 0 2px rgba(141, 94, 72, 0.1); }
+.lh-input.sm { flex: 0.4; }
+.lh-input.lg { flex: 1; }
+
+/* Map Button */
+.lh-map-box {
+  border: 1px dashed #ccc;
+  padding: 15px;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #777;
+  transition: 0.2s;
+  background: #fafafa;
+}
+.lh-map-box:hover { background: #f0f0f0; border-color: #aaa; }
+.lh-map-box.active {
+  background: #f4fff4; border: 1px solid #4caf50; color: #2e7d32;
+}
+
+/* Footer */
+.lh-form-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+.lh-labels { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.lh-chip {
+  padding: 6px 16px; border: 1px solid var(--lh-border); border-radius: 20px; cursor: pointer; font-size: 13px;
+}
+.lh-chip.active { background: var(--lh-brown); color: white; border-color: var(--lh-brown); }
+
+.lh-save-row { display: flex; gap: 10px; }
+.lh-cancel-btn { background: none; border: none; color: #777; cursor: pointer; padding: 10px; }
+.lh-save-btn {
+  background: var(--lh-brown); color: white; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; font-weight: 600;
+}
+.lh-save-btn:hover { background: var(--lh-brown-dark); }
+
+/* --- VIEW MODE --- */
+.lh-view-mode { line-height: 1.6; }
+.lh-user-info { font-size: 16px; color: #333; margin-bottom: 5px; }
+.lh-address-text { color: #555; font-size: 14px; }
+.lh-tag { display: inline-block; background: #f0ece9; color: var(--lh-brown); padding: 2px 10px; border-radius: 4px; font-size: 12px; margin-top: 8px; text-transform: uppercase; }
+
+/* --- ITEMS & SUMMARY --- */
+.lh-item-row { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #eee; align-items: center; }
+.lh-item-row:last-child { border-bottom: none; }
+.lh-item-row img { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; }
+.lh-item-info h4 { margin: 0; font-size: 14px; color: #333; font-weight: 500; }
+.lh-item-info p { margin: 2px 0 0; font-size: 12px; color: #888; }
+.lh-item-price { margin-left: auto; text-align: right; }
+.lh-item-price .qty { color: #888; font-size: 13px; margin-right: 10px; }
+.lh-item-price .price { font-weight: 600; color: var(--lh-brown); }
+
+.lh-sum-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: #666; }
+.lh-sum-row.total { font-size: 18px; color: #333; font-weight: 700; margin-top: 15px; }
+.lh-sum-row.total span:last-child { color: var(--lh-brown); }
+.lh-divider { border-top: 1px dashed #ddd; margin: 15px 0; }
+
+.lh-place-order-btn {
+  width: 100%; background: var(--lh-brown); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 20px; transition: 0.2s;
+}
+.lh-place-order-btn:hover { background: var(--lh-brown-dark); }
+.lh-place-order-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+/* --- MODAL --- */
+.lh-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.lh-modal { background: white; width: 90%; max-width: 600px; padding: 25px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+.lh-modal-head { display: flex; justify-content: space-between; margin-bottom: 20px; }
+.lh-modal-head h3 { margin: 0; }
+.lh-modal-head button { background: none; border: none; font-size: 20px; cursor: pointer; }
+.lh-map-wrapper { height: 300px; background: #eee; position: relative; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+.lh-pin-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%); font-size: 30px; pointer-events: none; z-index: 10; }
+.lh-modal-foot { display: flex; justify-content: space-between; }
+.lh-gps-btn { background: #e3f2fd; color: #1976d2; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.lh-confirm-btn { background: var(--lh-brown); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+/* Animations */
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Responsive */
+@media (max-width: 800px) {
+  .lh-grid { flex-direction: column; }
+  .lh-row { flex-direction: column; gap: 10px; }
+  .lh-form-footer { flex-direction: column; align-items: stretch; gap: 15px; }
+  .lh-save-row { justify-content: flex-end; }
+}
+
+/* --- SKELETON LOADER ANIMATION --- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Base Skeleton Style */
+.skeleton-header, 
+.skeleton-title, 
+.skeleton-input, 
+.skeleton-map-btn,
+.skeleton-chip,
+.skeleton-btn-action,
+.skeleton-img,
+.skeleton-text,
+.skeleton-btn-block,
+.skeleton-divider {
+  background: #f0f0f0;
+  background-image: linear-gradient(
+    90deg, 
+    #f0f0f0 25%, 
+    #e8e8e8 50%, 
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+/* Specific Shapes */
+.skeleton-header {
+  width: 200px;
+  height: 40px;
+  margin-bottom: 30px;
+}
+
+.skeleton-title { height: 24px; margin-bottom: 20px; }
+.skeleton-text { height: 16px; margin-bottom: 8px; border-radius: 4px; }
+
+/* Input Fields Mimic */
+.skeleton-input {
+  flex: 1;
+  height: 48px; /* Matches your real input height */
+}
+.skeleton-input.sm { flex: 0.5; }
+.skeleton-input.lg { flex: 1.5; }
+
+.skeleton-map-btn {
+  height: 60px;
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+/* Footer & Chips */
+.skeleton-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+.skeleton-chip { width: 60px; height: 32px; border-radius: 20px; }
+.skeleton-btn-action { width: 120px; height: 40px; margin-left: auto; }
+
+/* Items List */
+.skeleton-item-row {
+  display: flex;
+  gap: 15px;
+  padding: 15px 0;
+  border-bottom: 1px solid #eee;
+}
+.skeleton-img { width: 70px; height: 70px; }
+.skeleton-lines { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+/* Summary Card */
+.skeleton-btn-block { width: 100%; height: 50px; }
+.skeleton-divider { height: 1px; width: 100%; }
+
+/* Utility Classes for Widths */
+.w-30 { width: 30%; }
+.w-40 { width: 40%; }
+.w-50 { width: 50%; }
+.w-60 { width: 60%; }
+.w-100 { width: 100%; }
+.mb-2 { margin-bottom: 8px; }
+.mb-4 { margin-bottom: 16px; }
+.my-3 { margin: 16px 0; }
+.h-40 { height: 30px; }
+
+/* --- BUTTON LOADING SPINNER --- */
+.lh-place-order-btn {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50px;
+}
+
+.btn-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- SUCCESS OVERLAY ANIMATION --- */
+.order-success-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.95);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.success-card {
+  background: white;
+  padding: 40px 60px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(141, 94, 72, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.success-card h2 {
+  color: #8d5e48;
+  font-size: 28px;
+  margin: 20px 0 10px;
+}
+
+.success-card p {
+  color: #666;
+  font-size: 16px;
+}
+
+.redirect-text {
+  font-size: 14px;
+  color: #999;
+  margin-top: 20px;
+  animation: pulse 1.5s infinite;
+}
+
+/* Checkmark Animation */
+.checkmark-wrapper {
+  width: 80px;
+  height: 80px;
+}
+
+.checkmark {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 2;
+  stroke: #fff;
+  stroke-miterlimit: 10;
+  box-shadow: inset 0px 0px 0px #8d5e48;
+  animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+}
+
+.checkmark-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 2;
+  stroke-miterlimit: 10;
+  stroke: #8d5e48;
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes scale {
+  0%, 100% { transform: none; }
+  50% { transform: scale3d(1.1, 1.1, 1); }
+}
+
+@keyframes fill {
+  100% { box-shadow: inset 0px 0px 0px 50px #8d5e48; }
+}
+
+.bounce-in {
+  animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* --- EXISTING STYLES ... --- */
+
+/* --- PAYMENT & QR MODAL STYLES --- */
+.payment-modal {
+    text-align: center;
+    max-width: 400px;
+}
+
+.qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+}
+
+/* Simulated QR Code Box */
+.qr-placeholder {
+    width: 200px;
+    height: 200px;
+    background-color: white;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Theme Colors for QR Box */
+.qr-placeholder.GCash { border-color: #007dfe; background-color: #f0f8ff; }
+.qr-placeholder.Maya { border-color: #4caf50; background-color: #f1f8e9; }
+
+/* CSS QR Pattern Art (Simulated) */
+.qr-code-art {
+    width: 120px;
+    height: 120px;
+    background-image: 
+        linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000),
+        linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    opacity: 0.8;
+}
+
+.qr-placeholder span {
+    margin-top: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pay-instruction {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+}
+
+.pay-instruction strong {
+    color: #8d5e48;
+    font-size: 16px;
+    display: block;
+    margin-top: 8px;
+}
+
+/* Payment Option Buttons */
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 18px;
+    border: 2px solid #f0f0f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: white;
+}
+
+.payment-option:hover {
+    background-color: #fafafa;
+    border-color: #ddd;
+}
+
+.payment-option.active {
+    border-color: #8d5e48;
+    background-color: #fffbf9;
+    box-shadow: 0 4px 10px rgba(141, 94, 72, 0.05);
+}
+
+.radio-circle {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    position: relative;
+}
+
+.payment-option.active .radio-circle {
+    border-color: #8d5e48;
+    background: white;
+}
+
+.payment-option.active .radio-circle::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px; height: 10px;
+    background-color: #8d5e48;
+    border-radius: 50%;
+}
+
+.pay-label {
+    font-weight: 600;
+    color: #444;
+}
+
+/* --- QR IMAGE STYLING --- */
+.qr-image-wrapper {
+    width: 100%;
+    max-width: 250px; /* Constrain width */
+    margin-bottom: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #eee;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.qr-real-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+/* --- REFERENCE NUMBER INPUT (FIXED) --- */
+.ref-input-group {
+    width: 100%;
+    margin-top: 15px;
+    margin-bottom: 20px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+.ref-input-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.ref-input {
+    width: 100%;
+    padding: 14px;
+    box-sizing: border-box; /* <--- THIS FIXES THE OVERFLOW */
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+    letter-spacing: 1px;
+    background-color: #fff;
+    transition: all 0.2s;
+    outline: none; /* Removes default browser outline */
+}
+
+.ref-input:focus {
+    border-color: #8d5e48;
+    background-color: #fffbf9;
+    box-shadow: 0 0 0 4px rgba(141, 94, 72, 0.1);
+}
+
+.ref-input-group small {
+    display: block;
+    margin-top: 8px;
+    color: #888;
+    font-size: 0.8rem;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* SKELETON ANIMATION */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+.skeleton-card {
+  border: 1px solid #eee;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.skeleton-header, .skeleton-title-bar, .skeleton-row, .skeleton-line, .skeleton-img, .skeleton-btn {
+  background: #f0f0f0;
+  background-image: linear-gradient(90deg, #f0f0f0 0px, #f8f8f8 40px, #f0f0f0 80px);
+  background-size: 600px;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+.skeleton-header { height: 40px; width: 200px; margin-bottom: 30px; }
+.skeleton-title-bar { height: 24px; width: 150px; margin-bottom: 20px; }
+.skeleton-row { height: 40px; width: 100%; margin-bottom: 15px; }
+.skeleton-row.lg { height: 50px; }
+.skeleton-row.sm { height: 40px; width: 48%; display: inline-block; margin-right: 2%; }
+.skeleton-row.md { height: 40px; width: 100%; }
+
+.skeleton-item-row { display: flex; gap: 15px; margin-bottom: 15px; }
+.skeleton-img { width: 60px; height: 60px; border-radius: 8px; }
+.skeleton-text-group { flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.skeleton-line { height: 12px; width: 80%; }
+.skeleton-line.sm { width: 40%; }
+
+.skeleton-divider { height: 1px; background: #eee; margin: 15px 0; }
+.skeleton-btn.big { height: 50px; width: 100%; margin-top: 10px; border-radius: 25px; }
