@@ -1,0 +1,387 @@
+/* src/App.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Dancing+Script:wght@700&display=swap');
+
+:root {
+  --primary: #8d5e48;       /* Earthy Brown */
+  --primary-hover: #6d4635;
+  --accent: #fae1dd;        /* Soft Pink Hero BG */
+  --bg-color: #fdfbf7;      /* Cream Body BG */
+  --card-bg: #ffffff;
+  --text-dark: #4a4a4a;
+  --shadow: 0 10px 30px rgba(141, 94, 72, 0.1);
+}
+
+body {
+  background-color: var(--bg-color);
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-dark);
+  margin: 0;
+  padding: 0;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+h1, h2, h3 {
+  font-family: 'Dancing Script', cursive;
+  color: var(--primary);
+}
+
+/* src/App.css */
+
+/* Custom Toast Styling */
+.Toastify__toast {
+  border-radius: 15px !important;
+  font-family: 'Poppins', sans-serif !important;
+  box-shadow: 0 10px 20px rgba(141, 94, 72, 0.15) !important;
+}
+
+/* Success Message (Added to Cart) */
+.Toastify__toast--success {
+  background-color: #8d5e48 !important; /* Brand Brown */
+  color: white !important;
+}
+
+.Toastify__progress-bar--success {
+  background-color: #fae1dd !important; /* Soft Pink Progress */
+}
+
+/* Info Message (Wishlist) */
+.Toastify__toast--info {
+  background-color: white !important;
+  color: #8d5e48 !important;
+  border: 2px solid #8d5e48 !important;
+}
+
+.Toastify__progress-bar--info {
+  background-color: #8d5e48 !important;
+}
+
+/* Close button color fix */
+.Toastify__close-button--light {
+  color: inherit !important;
+  opacity: 0.7;
+}
+
+/* --- SHARED SKELETON ANIMATION --- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-box {
+  background: #f0f0f0;
+  background-image: linear-gradient(90deg, #f0f0f0 25%, #fafafa 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+  display: block;
+}
+
+/* CART SKELETON SIZES */
+.cart-item.skeleton-row {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    gap: 20px;
+}
+.cart-sk-img { width: 80px; height: 80px; }
+.cart-sk-title { width: 150px; height: 20px; margin-bottom: 10px; }
+.cart-sk-price { width: 80px; height: 16px; }
+.cart-sk-qty { width: 100px; height: 30px; }
+.cart-sk-btn { width: 30px; height: 30px; margin-left: auto; }
+
+/* WISHLIST SKELETON SIZES */
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 30px;
+    padding: 20px;
+}
+.skeleton-card {
+    height: 350px;
+    background: white;
+    border-radius: 20px;
+    padding: 15px;
+}
+.wish-sk-img { width: 100%; height: 200px; margin-bottom: 15px; }
+.wish-sk-title { width: 80%; height: 20px; margin-bottom: 10px; }
+.wish-sk-btn { width: 100%; height: 40px; margin-top: auto; }
+
+/* --- GLOBAL FIX: PREVENT LEFT/RIGHT SCROLLING --- */
+html, body {
+  overflow-x: hidden; /* This disables horizontal scrolling */
+  width: 100%;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#root {
+  overflow-x: hidden; /* Ensures the React root also doesn't scroll */
+  width: 100%;
+}
+
+/* Ensure all elements respect padding in their width */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+
+
+/* src/App.css - Append this at the bottom */
+
+/* --- ENHANCED MOBILE TOASTS --- */
+.Toastify__toast-container {
+  padding: 16px !important;
+  width: auto !important;
+  max-width: 90vw !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+.Toastify__toast {
+  border-radius: 50px !important; /* Pill shape */
+  font-family: 'Poppins', sans-serif !important;
+  box-shadow: 0 8px 20px rgba(141, 94, 72, 0.25) !important;
+  margin-bottom: 12px !important;
+  padding: 8px 20px !important;
+  min-height: 50px !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+.Toastify__toast-body {
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  text-align: center !important;
+  margin: 0 !important;
+}
+
+/* Success Toast - Themed Green/Brown */
+.Toastify__toast--success {
+  background: #2e7d32 !important; /* Deep Green for clarity */
+  color: white !important;
+  border: none !important;
+}
+
+.Toastify__toast-icon {
+  display: none !important; /* Hide default icon for cleaner text look on mobile */
+}
+
+/* Close button - hidden for sleek look (it auto closes anyway) */
+.Toastify__close-button {
+  display: none !important;
+}
+
+/* Positioning for Mobile */
+@media only screen and (max-width: 480px) {
+  .Toastify__toast-container {
+    top: 20px !important; /* Floating at top */
+    bottom: auto !important;
+  }
+  
+  .Toastify__toast {
+    animation: slideDownFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+  }
+}
+
+@keyframes slideDownFade {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* src/App.css - Append this at the very bottom */
+
+/* --- ENHANCED MOBILE NOTIFICATIONS (TOP POSITION) --- */
+.Toastify__toast-container {
+  z-index: 9999 !important; /* Ensure it's above everything */
+}
+
+.Toastify__toast {
+  border-radius: 50px !important; /* Pill shape */
+  font-family: 'Poppins', sans-serif !important;
+  box-shadow: 0 8px 20px rgba(141, 94, 72, 0.25) !important;
+  padding: 4px 20px !important;
+  min-height: 48px !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.Toastify__toast-body {
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  text-align: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Success Toast - Green */
+.Toastify__toast--success {
+  background: #2e7d32 !important; 
+  color: white !important;
+}
+
+/* Info Toast - Brown */
+.Toastify__toast--info {
+  background: #8d5e48 !important;
+  color: white !important;
+}
+
+/* Hide default icons/buttons for cleaner mobile look */
+.Toastify__toast-icon,
+.Toastify__close-button {
+  display: none !important;
+}
+
+/* --- MOBILE SPECIFIC POSITIONING --- */
+@media only screen and (max-width: 480px) {
+  .Toastify__toast-container {
+    /* FORCE TOP POSITION */
+    top: 20px !important; 
+    bottom: auto !important; 
+    
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+    max-width: 90vw !important;
+    padding: 0 !important;
+  }
+  
+  .Toastify__toast {
+    margin-bottom: 10px !important;
+    /* Slide down from top animation */
+    animation: slideDownFade 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+  }
+}
+
+@keyframes slideDownFade {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* src/App.css - Add to bottom */
+
+/* --- MOBILE NOTIFICATION FIX (TOP POSITION) --- */
+@media only screen and (max-width: 480px) {
+  .Toastify__toast-container {
+    top: 10px !important;       /* Force Top */
+    bottom: auto !important;    /* Disable Bottom */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 90% !important;
+    padding: 0 !important;
+    z-index: 99999 !important;
+  }
+
+  .Toastify__toast {
+    margin-bottom: 10px !important;
+    border-radius: 50px !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+    padding: 8px 15px !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
+    animation: slideDownFade 0.3s ease forwards !important;
+  }
+}
+
+@keyframes slideDownFade {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- SKELETON BASE --- */
+.skeleton {
+  background: #eee;
+  background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+}
+
+.shimmer {
+  animation: shimmer-effect 1.5s linear infinite;
+}
+
+@keyframes shimmer-effect {
+  to { background-position-x: -200%; }
+}
+
+/* --- ACCOUNT SKELETON LAYOUT --- */
+.account-skeleton-container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.sk-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+
+.sk-title {
+  width: 200px;
+  height: 24px;
+}
+
+.sk-info-card {
+  width: 100%;
+  height: 150px;
+  border-radius: 15px;
+  margin-top: 10px;
+}
+
+.sk-button {
+  width: 100%;
+  height: 45px;
+  border-radius: 50px;
+}
+
+/* --- GLOBAL PAGE SKELETON --- */
+.skeleton-page-container {
+  min-height: 100vh;
+  background-color: var(--bg-color); /* Matches your creamy theme */
+  padding: 0 20px;
+}
+
+.sk-nav {
+  height: 70px;
+  width: 100%;
+  margin-bottom: 50px;
+  border-radius: 0 0 15px 15px;
+}
+
+.skeleton-content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.sk-hero {
+  height: 350px;
+  width: 100%;
+  margin-bottom: 40px;
+  border-radius: 25px;
+}
+
+.sk-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+}
+
+.sk-card-lg {
+  height: 400px;
+  border-radius: 20px;
+}
+
+@media (max-width: 768px) {
+  .sk-grid-3 { grid-template-columns: 1fr; }
+  .sk-hero { height: 220px; }
+}
