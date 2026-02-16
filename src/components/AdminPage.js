@@ -252,7 +252,33 @@ const AdminPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
-    const payload = { name: formData.name, category: formData.category, price: Number(formData.price), quantity: Number(formData.stock), description: formData.description, images: formData.images };
+
+    // ✅ FIX: Duplicate Name Check
+    // We only check for duplicates if the admin is ADDING a new product (not editing)
+    if (!isEditing) {
+      const isDuplicate = products.some(p => 
+        (p.name || "").trim().toLowerCase() === formData.name.trim().toLowerCase()
+      );
+
+      if (isDuplicate) {
+        toast.warn(`"${formData.name}" is already in your inventory!`, { 
+          position: "top-center",
+          toastId: "duplicate-warning" 
+        });
+        setIsSaving(false);
+        return; // Stop the function here
+      }
+    }
+
+    const payload = { 
+      name: formData.name, 
+      category: formData.category, 
+      price: Number(formData.price), 
+      quantity: Number(formData.stock), 
+      description: formData.description, 
+      images: formData.images 
+    };
+
     try {
       if (isEditing) {
         await updateProduct(editId, payload);
@@ -265,7 +291,11 @@ const AdminPage = () => {
       }
       setActiveTab('inventory');
       setFormData({ name: '', price: '', category: 'Crochet', stock: '', description: '', images: [] });
-    } catch (error) { toast.error("Failed to save."); } finally { setIsSaving(false); }
+    } catch (error) { 
+      toast.error("Failed to save."); 
+    } finally { 
+      setIsSaving(false); 
+    }
   };
 
   const handleEdit = (p) => {
@@ -363,7 +393,6 @@ const AdminPage = () => {
           <button className={`nav-item ${activeTab === 'add-product' ? 'active' : ''}`} onClick={() => { setActiveTab('add-product'); setIsEditing(false); setFormData({ name: '', price: '', category: 'Crochet', stock: '', description: '', images: [] }); }}>➕ Product</button>
           <button className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>🚚 Orders</button>
           
-          {/* ✅ INBOX TAB WITH RED DOT */}
           <button className={`nav-item ${activeTab === 'messages' ? 'active' : ''} nav-inbox`} onClick={() => setActiveTab('messages')}>
              💬 Inbox
              {hasUnreadMessages && <span className="admin-nav-dot"></span>}
@@ -372,7 +401,6 @@ const AdminPage = () => {
       </aside>
 
       <main className="admin-main">
-        {/* INVENTORY */}
         {activeTab === 'inventory' && (
           <div className="tab-content fade-in">
             <header className="content-header"><h2>Inventory Overview</h2></header>
@@ -406,7 +434,6 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* ADD/EDIT PRODUCT */}
         {activeTab === 'add-product' && (
           <div className="tab-content fade-in">
             <header className="content-header"><h2>{isEditing ? 'Edit Product' : 'Add New Product'}</h2></header>
@@ -437,7 +464,6 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* ORDERS */}
         {activeTab === 'orders' && (
           <div className="tab-content fade-in">
             <header className="content-header">
@@ -461,7 +487,6 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* MESSAGES */}
         {activeTab === 'messages' && (
           <div className={`tab-content fade-in chat-tab-container ${activeChatUser ? 'mobile-chat-active' : ''}`}>
             <div className="chat-sidebar">
