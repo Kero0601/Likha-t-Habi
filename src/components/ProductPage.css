@@ -617,4 +617,11 @@
   }
   
   .sk-title { width: 100%; }
+
+}
+
+.active-thumb {
+  border: 2px solid #8d5e48 !important; /* Theme Brown */
+  transform: scale(1.1);
+  transition: all 0.2s ease;
 }
