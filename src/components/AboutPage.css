@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap');
 
 /* --- VARIABLES --- */
@@ -225,4 +226,233 @@
     .story-grid { grid-template-columns: 1fr; }
     .hero-content h1 { font-size: 2.5rem; }
     .values-grid { grid-template-columns: 1fr; }
+=======
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap');
+
+/* --- VARIABLES --- */
+:root {
+    --primary: #8d5e48;    /* Brand Brown */
+    --secondary: #3e2723;  /* Dark Espresso */
+    --bg-cream: #fdfcf8;   /* Light Cream */
+    --white: #ffffff;
+    --text-dark: #333333;
+    --text-light: #666666;
+}
+
+.about-wrapper {
+    background-color: var(--bg-cream);
+    min-height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-dark);
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- HERO SECTION (FIXED) --- */
+.about-hero {
+    position: relative;
+    height: 60vh;
+    min-height: 400px;
+    /* Use a solid backup color in case image fails */
+    background-color: #8d5e48; 
+    background-image: url('https://images.unsplash.com/photo-1582239634937-2e1d74e327cb?q=80&w=2000&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    /* Darker overlay to ensure text pops */
+    background: rgba(0, 0, 0, 0.5); 
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 20px;
+}
+
+/* Force White Text with !important */
+.hero-content h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+    color: #ffffff !important; 
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.hero-content .separator {
+    font-size: 2rem;
+    color: #ffd700; /* Gold accent */
+    margin: 10px 0;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    font-weight: 300;
+    color: #f0f0f0 !important;
+    letter-spacing: 0.5px;
+}
+
+/* --- STORY SECTION --- */
+.about-section { margin-bottom: 100px; }
+
+.story-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+/* Image Styling */
+.story-image-wrapper { position: relative; }
+
+.story-img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    aspect-ratio: 4/5;
+    object-fit: cover;
+    background-color: #eee; /* Loading placeholder color */
+}
+
+.story-img-bg {
+    position: absolute;
+    top: 20px; left: -20px;
+    width: 100%; height: 100%;
+    background-color: var(--primary);
+    border-radius: 12px;
+    z-index: 1;
+    opacity: 0.2;
+}
+
+/* Text Styling */
+.story-text .subtitle {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--primary);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.story-text h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    color: var(--secondary);
+    margin-bottom: 25px;
+    line-height: 1.1;
+}
+
+.story-text p {
+    line-height: 1.8;
+    color: var(--text-light);
+    margin-bottom: 20px;
+    font-size: 1.05rem;
+}
+
+.signature h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin-top: 5px;
+}
+
+/* --- VALUES SECTION --- */
+.values-section {
+    background-color: #fff;
+    padding: 100px 0;
+    margin-bottom: 0;
+}
+
+.section-header { text-align: center; margin-bottom: 60px; }
+.section-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    color: var(--secondary);
+    margin-bottom: 15px;
+}
+.separator-line {
+    width: 60px; height: 3px; background-color: var(--primary); margin: 0 auto;
+}
+
+.values-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;
+}
+
+.value-card {
+    background: #fdfcf8;
+    padding: 40px 30px; border-radius: 20px; text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    transition: transform 0.3s ease;
+}
+.value-card:hover { transform: translateY(-10px); }
+
+.icon-circle {
+    width: 70px; height: 70px; background-color: #fff3e0;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin: 0 auto 20px; color: var(--primary);
+}
+
+.value-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem; margin-bottom: 15px; color: var(--secondary);
+}
+
+/* --- CTA SECTION --- */
+.about-cta-section {
+    padding: 100px 20px;
+    text-align: center;
+    position: relative;
+    background-image: url('https://images.unsplash.com/photo-1516961642265-531546e84af2?q=80&w=2000&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    color: white;
+}
+
+.cta-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(62, 39, 35, 0.8);
+    z-index: 1;
+}
+
+.cta-content { position: relative; z-index: 2; }
+
+.cta-content h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem; margin-bottom: 15px; color: white;
+}
+.cta-content p { font-size: 1.2rem; margin-bottom: 30px; color: #eee; }
+
+.btn-shop-now {
+    background-color: white; color: var(--secondary);
+    padding: 15px 40px; border: none; border-radius: 50px;
+    font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.3s;
+}
+.btn-shop-now:hover { background-color: var(--primary); color: white; }
+
+/* --- RESPONSIVE --- */
+@media (max-width: 900px) {
+    .story-grid { grid-template-columns: 1fr; }
+    .hero-content h1 { font-size: 2.5rem; }
+    .values-grid { grid-template-columns: 1fr; }
+>>>>>>> 46f177dc8ce17a0f72dc7182eb1b2842c55e7a13
 }
