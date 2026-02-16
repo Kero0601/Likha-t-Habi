@@ -171,13 +171,15 @@ const CheckoutPage = () => {
     setIsPlacingOrder(true);
     setShowPaymentModal(false);
 
+    // ✅ UPDATED: PRIORITIZE THE VARIANT SELECTION (Image and Variation Name)
     const cleanCartItems = itemsToBuy.map(item => ({
         id: item.id || item._id, 
         name: item.name, 
         price: item.price, 
         quantity: item.quantity, 
         variation: item.variation || 'Standard',
-        image: item.images?.[0] || item.image 
+        // Priority is on the specific variant image passed from ProductPage
+        image: item.image || item.images?.[0] 
     }));
 
     const success = await placeOrder({ 
@@ -273,15 +275,23 @@ const CheckoutPage = () => {
                     )}
                 </div>
 
-                {/* ITEMS CARD */}
+                {/* ✅ UPDATED ITEMS CARD: SHOW DYNAMIC SELECTION */}
                 <div className="lh-card fade-up delay-1">
                     <h3>Order Items</h3>
                     <div className="lh-items">
                         {itemsToBuy.map(item => (
                             <div key={item.id} className="lh-item-row">
-                                <img src={item.images?.[0] || item.image} alt={item.name} />
-                                <div className="lh-item-info"><h4>{item.name}</h4><p>Standard</p></div>
-                                <div className="lh-item-price"><span className="qty">x{item.quantity}</span> ₱{(item.price * item.quantity).toLocaleString()}</div>
+                                {/* Priority on the specific variant image picked by the customer */}
+                                <img src={item.image || item.images?.[0] || '/placeholder.png'} alt={item.name} />
+                                <div className="lh-item-info">
+                                    <h4>{item.name}</h4>
+                                    {/* Priority on the specific variation name picked */}
+                                    <p>{item.variation || 'Standard'}</p>
+                                </div>
+                                <div className="lh-item-price">
+                                    <span className="qty">x{item.quantity}</span> 
+                                    ₱{(item.price * item.quantity).toLocaleString()}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -303,7 +313,7 @@ const CheckoutPage = () => {
                     </div>
                 </div>
 
-                {/* MOBILE ONLY: VISIBLE BREAKDOWN (Because bottom bar only shows total) */}
+                {/* MOBILE ONLY: VISIBLE BREAKDOWN */}
                 <div className="lh-card mobile-breakdown fade-up delay-2">
                     <h3>Payment Details</h3>
                     <div className="lh-sum-row"><span>Merchandise Subtotal</span> <span>₱{totalAmount.toLocaleString()}</span></div>
@@ -313,7 +323,7 @@ const CheckoutPage = () => {
                 </div>
             </div>
 
-            {/* RIGHT COLUMN (Desktop Sidebar / Mobile Sticky Footer) */}
+            {/* RIGHT COLUMN */}
             <div className="lh-col-right">
                 <div className="lh-card summary fade-up delay-2">
                     <h3>Order Summary</h3>
@@ -329,7 +339,7 @@ const CheckoutPage = () => {
             </div>
         </div>
 
-        {/* --- MODALS (Payment & Map) --- */}
+        {/* --- MODALS --- */}
         {showPaymentModal && (
             <div className="lh-modal-overlay">
                 <div className="lh-modal payment-modal">
