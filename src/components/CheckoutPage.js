@@ -171,14 +171,15 @@ const CheckoutPage = () => {
     setIsPlacingOrder(true);
     setShowPaymentModal(false);
 
-    // ✅ UPDATED: PRIORITIZE THE VARIANT SELECTION (Image and Variation Name)
+    // ✅ UPDATED: Construct order items with SPECIFIC variant details
     const cleanCartItems = itemsToBuy.map(item => ({
         id: item.id || item._id, 
         name: item.name, 
         price: item.price, 
         quantity: item.quantity, 
+        // Save the specific variation name
         variation: item.variation || 'Standard',
-        // Priority is on the specific variant image passed from ProductPage
+        // ✅ PRIORITY: Save the specific image variant used in the cart
         image: item.image || item.images?.[0] 
     }));
 
@@ -275,17 +276,21 @@ const CheckoutPage = () => {
                     )}
                 </div>
 
-                {/* ✅ UPDATED ITEMS CARD: SHOW DYNAMIC SELECTION */}
+                {/* ✅ ITEMS CARD (Updated to show specific variants) */}
                 <div className="lh-card fade-up delay-1">
                     <h3>Order Items</h3>
                     <div className="lh-items">
-                        {itemsToBuy.map(item => (
-                            <div key={item.id} className="lh-item-row">
-                                {/* Priority on the specific variant image picked by the customer */}
-                                <img src={item.image || item.images?.[0] || '/placeholder.png'} alt={item.name} />
+                        {itemsToBuy.map((item, index) => (
+                            <div key={`${item.id}-${index}`} className="lh-item-row">
+                                {/* ✅ DISPLAY: Use the specific variant image if available */}
+                                <img 
+                                    src={item.image || item.images?.[0] || '/placeholder.png'} 
+                                    alt={item.name} 
+                                    onError={(e) => e.target.src = '/placeholder.png'}
+                                />
                                 <div className="lh-item-info">
                                     <h4>{item.name}</h4>
-                                    {/* Priority on the specific variation name picked */}
+                                    {/* ✅ DISPLAY: Show variation name or fallback */}
                                     <p>{item.variation || 'Standard'}</p>
                                 </div>
                                 <div className="lh-item-price">
@@ -339,7 +344,7 @@ const CheckoutPage = () => {
             </div>
         </div>
 
-        {/* --- MODALS --- */}
+        {/* --- MODALS (Payment & Map) --- */}
         {showPaymentModal && (
             <div className="lh-modal-overlay">
                 <div className="lh-modal payment-modal">
