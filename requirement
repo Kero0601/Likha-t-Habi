@@ -1,0 +1,2 @@
+npm uninstall pg
+npm install mysql2
