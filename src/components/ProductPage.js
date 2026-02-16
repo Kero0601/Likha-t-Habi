@@ -50,23 +50,35 @@ const ProductPage = () => {
     navigate('/login', { state: { from: location.pathname + location.search } });
   };
 
-  // ✅ Add to Cart (login required)
+  // ✅ UPDATED: Pass the specific selected image to the Cart
   const handleAddToCart = () => {
     if (!product || (product.quantity || 0) <= 0) return;
 
     if (!user) return goLogin();
 
-    const ok = addToCart(product, quantity);
+    // Create a product object that includes the SPECIFIC selected image
+    const itemWithVariant = { 
+      ...product, 
+      image: selectedImage // This ensures the chosen variant is saved
+    };
+
+    const ok = addToCart(itemWithVariant, quantity);
     if (!ok) goLogin();
   };
 
-  // ✅ Buy Now (login required, because Checkout is protected)
+  // ✅ UPDATED: Pass the specific selected image to Buy Now / Checkout
   const handleBuyNow = () => {
     if (!product || (product.quantity || 0) <= 0) return;
 
     if (!user) return goLogin();
 
-    const itemToBuy = { ...product, quantity: quantity };
+    // Create a product object that includes the SPECIFIC selected image
+    const itemToBuy = { 
+      ...product, 
+      quantity: quantity, 
+      image: selectedImage // Pass the variant image to checkout
+    };
+
     navigate('/checkout', {
       state: {
         checkoutItems: [itemToBuy],
