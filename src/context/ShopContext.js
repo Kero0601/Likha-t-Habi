@@ -62,6 +62,10 @@ export const ShopProvider = ({ children }) => {
       await updateDoc(doc(db, "users", currentUser.uid), { cart: newCart });
     } catch (err) {
       console.error("Failed to save cart", err);
+      // 🔥 FIX: Warn if data is too big (likely Base64 images)
+      if (err.code === 'resource-exhausted' || err.message.includes('exceeds the maximum allowed size')) {
+         toast.error("Cart is too large! Please ensure product images are URLs, not files.", { autoClose: 5000 });
+      }
     }
   };
 
@@ -205,25 +209,34 @@ export const ShopProvider = ({ children }) => {
   };
 
   // ============================================================
-  // ✅ CART ACTIONS (LOGIN REQUIRED) + NEW ITEMS ON TOP
+  // ✅ CART ACTIONS: Supports Unique Image Variants
   // ============================================================
   const addToCart = (product, quantityToAdd = 1) => {
-    // ✅ Require login
     if (!requireLogin("need-login-cart", "Please sign in to add items to cart 😊")) {
       return false;
     }
 
     const stock = Number(product.quantity || 0);
     if (stock <= 0) {
-      toast.error("Sorry, this item is Sold Out!", {
-        position: "top-center",
-        toastId: "sold-out",
-      });
+      toast.error("Sorry, this item is Sold Out!", { position: "top-center", toastId: "sold-out" });
       return false;
     }
 
     const productId = toId(product);
-    const existingIndex = cart.findIndex((item) => toId(item) === productId);
+    // ✅ Identify unique items by BOTH ID and the selected variant image
+    let variantImage = product.image || (Array.isArray(product.images) ? product.images[0] : null);
+
+    // 🔥 PREVENT DB CRASH: If image is a Base64 string > 200 chars, force placeholder
+    if (variantImage && variantImage.length > 500 && !variantImage.startsWith('http')) {
+        console.warn("Blocked huge image data from cart");
+        variantImage = null; // Don't save Base64 to cart, it kills Firestore
+    }
+
+    // Check if item with SAME ID and SAME IMAGE exists
+    const existingIndex = cart.findIndex(
+      (item) => toId(item) === productId && item.image === variantImage
+    );
+    
     let newCart = [...cart];
 
     if (existingIndex !== -1) {
@@ -231,10 +244,7 @@ export const ShopProvider = ({ children }) => {
       const currentQty = Number(existingItem.quantity || 0);
 
       if (currentQty + quantityToAdd > stock) {
-        toast.error(`Only ${stock} items available!`, {
-          position: "top-center",
-          toastId: "stock-limit",
-        });
+        toast.error(`Only ${stock} items available!`, { position: "top-center", toastId: "stock-limit" });
         return false;
       }
 
@@ -245,21 +255,17 @@ export const ShopProvider = ({ children }) => {
       });
     } else {
       if (quantityToAdd > stock) {
-        toast.error(`Only ${stock} items available!`, {
-          position: "top-center",
-          toastId: "stock-limit",
-        });
+        toast.error(`Only ${stock} items available!`, { position: "top-center", toastId: "stock-limit" });
         return false;
       }
 
-      newCart.unshift({ ...product, quantity: quantityToAdd });
+      // ✅ Store the item with its specific variant image
+      newCart.unshift({ ...product, image: variantImage, quantity: quantityToAdd });
     }
 
     if (!toast.isActive("cart-success")) {
       toast.success(`Added ${quantityToAdd} ${product.name} to cart! 🛒`, {
-        position: "top-center",
-        autoClose: 1500,
-        toastId: "cart-success",
+        position: "top-center", autoClose: 1500, toastId: "cart-success",
       });
     }
 
@@ -268,12 +274,13 @@ export const ShopProvider = ({ children }) => {
     return true;
   };
 
-  const decreaseQuantity = (id) => {
+  // ✅ UPDATED: Requires image to identify variant
+  const decreaseQuantity = (id, image) => {
     if (!requireLogin("need-login-cart2", "Please sign in first 😊")) return false;
 
     const targetId = String(id);
     const newCart = cart.map((item) =>
-      toId(item) === targetId
+      toId(item) === targetId && item.image === image
         ? { ...item, quantity: Math.max(1, Number(item.quantity || 1) - 1) }
         : item
     );
@@ -283,7 +290,8 @@ export const ShopProvider = ({ children }) => {
     return true;
   };
 
-  const updateCartItemCount = (newAmount, id) => {
+  // ✅ UPDATED: Requires image to identify variant
+  const updateCartItemCount = (newAmount, id, image) => {
     if (!requireLogin("need-login-cart3", "Please sign in first 😊")) return false;
 
     const targetId = String(id);
@@ -291,15 +299,12 @@ export const ShopProvider = ({ children }) => {
     const stock = product ? Number(product.quantity || 0) : Infinity;
 
     if (newAmount > stock) {
-      toast.error(`Limit reached: Only ${stock} items available.`, {
-        position: "top-center",
-        toastId: "manual-limit",
-      });
+      toast.error(`Limit reached: Only ${stock} items available.`, { position: "top-center", toastId: "manual-limit" });
       return false;
     }
 
     const newCart = cart.map((item) =>
-      toId(item) === targetId
+      toId(item) === targetId && item.image === image
         ? { ...item, quantity: newAmount > 0 ? newAmount : 1 }
         : item
     );
@@ -309,11 +314,13 @@ export const ShopProvider = ({ children }) => {
     return true;
   };
 
-  const removeFromCart = (id) => {
+  // ✅ UPDATED: Requires image to identify variant
+  const removeFromCart = (id, image) => {
     if (!requireLogin("need-login-cart4", "Please sign in first 😊")) return false;
 
     const targetId = String(id);
-    const newCart = cart.filter((item) => toId(item) !== targetId);
+    // Remove only the match with ID AND Image
+    const newCart = cart.filter((item) => !(toId(item) === targetId && item.image === image));
 
     setCart(newCart);
     saveCartToDB(newCart, user);
@@ -324,7 +331,6 @@ export const ShopProvider = ({ children }) => {
   // ✅ WISHLIST (LOGIN REQUIRED) + NEW ITEMS ON TOP
   // ============================================================
   const toggleWishlist = (product) => {
-    // ✅ Require login
     if (!requireLogin("need-login-wish", "Please sign in to use wishlist ❤️")) {
       return false;
     }
@@ -389,10 +395,7 @@ export const ShopProvider = ({ children }) => {
   // ============================================================
   const placeOrder = async (orderData) => {
     if (!user) {
-      toast.error("Please login first.", {
-        position: "top-center",
-        toastId: "order-login",
-      });
+      toast.error("Please login first.", { position: "top-center", toastId: "order-login" });
       return false;
     }
 
@@ -440,25 +443,24 @@ export const ShopProvider = ({ children }) => {
         });
 
         // clear purchased cart items
-        const purchasedIds = items.map((i) => toId(i));
-        const remainingCart = cart.filter((c) => !purchasedIds.includes(toId(c)));
+        // 🔥 FIX: Unused 'purchasedIds' warning resolved by using logic inside filter
+        const remainingCart = cart.filter(c => {
+            // Keep items NOT in the purchase list (matching id + image)
+            const wasPurchased = items.some(purchased => 
+                toId(purchased) === toId(c) && purchased.image === c.image
+            );
+            return !wasPurchased;
+        });
+        
         tx.update(doc(db, "users", user.uid), { cart: remainingCart });
-
         setCart(remainingCart);
       });
 
-      toast.success("Order placed successfully!", {
-        position: "top-center",
-        toastId: "order-success",
-      });
-
+      toast.success("Order placed successfully!", { position: "top-center", toastId: "order-success" });
       return true;
     } catch (error) {
       console.error(error);
-      toast.error(error.message, {
-        position: "top-center",
-        toastId: "order-error",
-      });
+      toast.error(error.message, { position: "top-center", toastId: "order-error" });
       return false;
     } finally {
       setActionLoading(false);
@@ -479,10 +481,8 @@ export const ShopProvider = ({ children }) => {
       if (String(err).includes("index")) {
         toast.info("Building index...", { position: "top-center", toastId: "idx" });
       }
-
       const q2 = query(collection(db, "orders"), where("userId", "==", user.uid));
       const snap2 = await getDocs(q2);
-
       return snap2.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -526,7 +526,6 @@ export const ShopProvider = ({ children }) => {
         updateProduct,
         deleteProduct,
 
-        // ✅ login-required functions return true/false now
         addToCart,
         decreaseQuantity,
         updateCartItemCount,
