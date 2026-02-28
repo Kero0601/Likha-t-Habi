@@ -40,3 +40,7 @@ backend/config/serviceAccountKey.json
 *.pem
 *.key
 
+# Firebase config (keep keys private)
+src/firebase.js
+.env
+
