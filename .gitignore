@@ -41,6 +41,5 @@ backend/config/serviceAccountKey.json
 *.key
 
 # Firebase config (keep keys private)
-src/firebase.js
 .env
 
